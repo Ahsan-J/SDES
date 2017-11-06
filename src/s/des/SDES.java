@@ -7,7 +7,7 @@ package s.des;
 
 /**
  *
- * @author TUSER
+ * @author Ahsan Jawed
  */
 public class SDES {
 
@@ -108,7 +108,7 @@ public class SDES {
         Matrix[1]=right;
         return Matrix;
     }
-    public static int [][] XOR(int [][] val1,int val2[][]){
+    public static int [][] XOR_2D(int [][] val1,int val2[][]){
         int [][]P=new int[2][4];
         for(int i=0;i<2;i++){
             for(int j=0;j<4;j++){
@@ -118,51 +118,85 @@ public class SDES {
         return P;
     }
     
+    public static int [] XOR_1D(int [] val1,int val2[]){
+        int []P=new int[val1.length];
+        if(val1.length==val2.length){
+            for(int i=0;i<val1.length;i++){
+                P[i]=val1[i]^val2[i];
+            }
+        }
+        return P;
+    }
+    
     public static int toDecimal(String val){
         double Sum = 0;
-        for(int i=val.length()-1;i>0;i--){
-            Sum = Sum + Character.getNumericValue(val.charAt(i))+ Math.pow(2, i);
+        for(int i=0;i<val.length();i++){
+            Sum = Sum + Character.getNumericValue(val.charAt(i))* Math.pow(2, (val.length()-1)-i);
         }
         return (int) Sum;
     }
     
-    public static int [][] performSBox(int val [][]){
-        String S0_row = (Integer.toString(val[0][1])+Integer.toString(val[0][2]));
-        String S0_column = (Integer.toString(val[0][0])+Integer.toString(val[0][3]));
-        String S1_row = (Integer.toString(val[1][1])+Integer.toString(val[1][2]));
-        String S1_column = (Integer.toString(val[1][0])+Integer.toString(val[1][3]));
+    public static int [] performSBox(int val [][]){
+        String S0_x = (Integer.toString(val[0][1])+Integer.toString(val[0][2]));
+        String S0_y = (Integer.toString(val[0][0])+Integer.toString(val[0][3]));
+        String S1_x = (Integer.toString(val[1][1])+Integer.toString(val[1][2]));
+        String S1_y = (Integer.toString(val[1][0])+Integer.toString(val[1][3]));
         
-        System.out.println(toDecimal(S1_column));
+        String merged = Integer.toBinaryString(S0[toDecimal(S0_y)][toDecimal(S0_x)])+Integer.toBinaryString(S1[toDecimal(S1_y)][toDecimal(S1_x)]);
+        int [] retVal = new int [merged.length()];
         
-        return val;
+        for(int i=0;i<merged.length();i++){
+            retVal[i] = Character.getNumericValue(merged.charAt(i));
+        }
+        
+        return retVal;
     }
     
-    public static void fK(int [] PT_IP){
-        int getKeys[][] = keyGeneration();
-        
-        int[] PT_IP_left=new int[PT_IP.length/2]; //Step1
+    public static int [] fK(int [] PT_IP,int[] Key){
+       int[] PT_IP_left=new int[PT_IP.length/2]; //Step1
         int[] PT_IP_right=new int[PT_IP.length/2];
         for(int i=0;i<PT_IP_left.length;i++){
             PT_IP_left[i]= PT_IP[i];
             PT_IP_right[i]=PT_IP[i+PT_IP_left.length];
         }
         
-        PT_IP_right=Concatinate(PT_IP_right, PT_IP_right);//Step2
+        int [] New_PT_IP_right=Concatinate(PT_IP_right, PT_IP_right);//Step2
         
-        int [] PT_EP = table_return(PT_IP_right, EP);//Step3
+        int [] PT_EP = table_return(New_PT_IP_right, EP);//Step3
         
         int [][] n = createMatrix(PT_EP);//Step4
         
-        int [][] k = createMatrix(getKeys[0]); //Step5
+        int [][] k = createMatrix(Key); //Step5
         
-        int [][] P = XOR(n, k); //Step6
+        int [][] P = XOR_2D(n, k); //Step6
         
-        int[][] extracted = performSBox(P); //Step7
+        int[] S = performSBox(P); //Step7 & Step8
         
+        int [] S_P4 = table_return(S, P4); //Step9
+        
+        int [] BitXORed = (XOR_1D(PT_IP_left,S_P4)); //Step10
+        
+        int [] Concatinated = Concatinate(BitXORed,PT_IP_right);
+        
+        int [] SwitchedValue = Concatinate(PT_IP_right, BitXORed);
+        
+        return SwitchedValue;
     }
+    
+//    public static int [] switchFunction(int [] val){
+//        int [] valA = new int [val.length/2];
+//        int [] valB = new int [val.length/2];
+//        for(){
+//            
+//        }
+//    } 
+    
     public static void Encrypt(int [] PT){
+        int getKeys[][] = keyGeneration();
         int [] PT_IP = table_return(PT, IP); //Step1
-        fK(PT_IP);
+        int [] Switched = fK(PT_IP,getKeys[0]);
+//        display(Switched);
+        display(fK(Switched,getKeys[1]));
     }
     
     public static void main(String[] args) {
